@@ -68,7 +68,7 @@ def train_model(model, cmd_input, dataloaders):
     #make sure the model is in the correct place
     model.to(device)
 
-    for epoch in range(cmd_input.epochs):
+    for epoch in range(int(cmd_input.epochs)):
         for inputs, labels in dataloaders['train']:
             steps += 1
             # esnure labels and inputs are in the right location

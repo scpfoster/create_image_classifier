@@ -76,5 +76,5 @@ model = proj_model.load_model_mod_classifier(cmd_input)
 ## train the model on the specified location with the specified hyper parameters
 ## note this has only ever been tested on the Udacity GPU
 #######
-trained_model = proj_model.train_model(model, cmd_input, image_dataset, image_dataloaders)
+trained_model = proj_model.train_model(model, cmd_input, dataloaders)
 
