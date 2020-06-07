@@ -15,11 +15,11 @@
 ##  path to the data - as a string, eg: 'flowers'
 ## Optional Command Line Arguments:
 ##  --arch - the base model to be used, must be a torchvision supported model, 
-##        default vgg, saved as arch
+##        default densenet, saved as arch
 ##  --save_dir - string - directory to save the file checkpoint.pth
 ##        default is current directory, saved as save_dir
 ##  --learning_rate - float - learning rate to be used during training
-##        default is 0.03, saved as learn_rate
+##        default is 0.003, saved as learn_rate
 ##  --hidden_units - int - number of hidden units to use in the classifier
 ##        default is [4096, 1024], saved as hidden_units
 ##  --epochs - int - number of training epocs, default is 6, saved as epochs
@@ -83,6 +83,6 @@ trained_model, optimizer = proj_model.train_model(model, cmd_input, dataloaders)
 ##   model will be saved in file called checkpoint_<dateTime>.pth
 ######
 print("saving model to checkpoint")
-save_checkpoint(trained_model, cmd_input, dataset, optimizer)
+proj_model.save_checkpoint(trained_model, cmd_input, image_datasets, optimizer)
 
 

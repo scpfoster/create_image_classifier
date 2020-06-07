@@ -18,15 +18,15 @@ def load_model_mod_classifier(cmd_input):
         #get model inputs
         input_size = model.classifier[0].in_features
 
-    elif "resnet" in cmd_input.arch.lower():
+    elif "densenet" in cmd_input.arch.lower():
         # code to load a resnet model
-        model = models.resnet18(pretrained=True)
+        model = models.densenet121(pretrained=True)
         #get model inputs
-        input_size = model.fc.in_features
+        input_size = model.classifier.in_features
 
     else:
         #unsupported model
-        print("Only vgg and resnet are supported architectures at this time")
+        print("Only vgg and densenet are supported architectures at this time")
         exit()
 
     #freeze the model inputs
@@ -101,27 +101,29 @@ def train_model(model, cmd_input, dataloaders):
                 accuracy = 0
                 model.eval()
                 with torch.no_grad():
-                    for inputs, labels in dataloaders['valid']:
-                        inputs, labels = inputs.to(device), labels.to(device)
-                        logps = model.forward(inputs)
-                        batch_loss = criterion(logps, labels)
+                    for inputs_v, labels_v in dataloaders['valid']:
+                        inputs_v, labels_v = inputs_v.to(device), labels_v.to(device)
+                        logps_v = model.forward(inputs_v)
+                        batch_loss = criterion(logps_v, labels_v)
 
                         valid_loss += batch_loss.item()
 
                         # Calculate accuracy
-                        ps = torch.exp(logps)
+                        ps = torch.exp(logps_v)
                         top_p, top_class = ps.topk(1, dim=1)
-                        equals = top_class == labels.view(*top_class.shape)
+                        equals = top_class == labels_v.view(*top_class.shape)
                         accuracy += torch.mean(equals.type(torch.FloatTensor)).item()
-
+                
                 print(f"Epoch {epoch+1}/{cmd_input.epochs}.. "
                       f"Train loss: {running_loss/print_every:.3f}.. "
                       f"Validation loss: {valid_loss/len(dataloaders['valid']):.3f}.. "
                       f"Validation accuracy: {accuracy/len(dataloaders['valid']):.3f}")
+           
                 running_loss = 0
                 model.train()
     
     return model, optimizer
+    
 
 ## saves a checkpoint file of the specified model
 ## filename will include a timestamp in the name: checkpoint_yyyy_mm_mm_hh_mm
@@ -136,18 +138,18 @@ def save_checkpoint(model, cmd_input, dataset, optimizer):
     #set the arch
     if "vgg" in cmd_input.arch.lower():
         arch = 'vgg16_bn'
-    elif "resnet" in cmd_input.arch.lower():
-        arch = "resnet18"
+    elif "densenet" in cmd_input.arch.lower():
+        arch = "densenet121"
     else:
         #unsupported model, this error should have been caught earlier
         #if for some reason it was not, just going to set to vgg16_bn
         #in real life, I would make this a stronger error check, but I 
         #have spent too much time on this already
-        print("defaulting arch to vgg16_bn")
-        arch = 'vgg16_bn'
+        print("defaulting arch to densenet121")
+        arch = 'densenet121'
     
     torch.save({
-        'epochs': cmd_input.epoch,
+        'epochs': cmd_input.epochs,
         'arch': arch,
         'classifier': model.classifier,
         'model_state_dict': model.state_dict(),
@@ -159,18 +161,17 @@ def save_checkpoint(model, cmd_input, dataset, optimizer):
 
 ## loads the specified checkpoint and returns a model
 ## intended to be used to reload trained, or partially trained models
-def load_checkpoint(checkpoint):
+def load_checkpoint(file):
     #load checkpoint
     checkpoint = torch.load(file)
     #assign model passed on saved architecture
-    if "resnet" in checkpoint['arch'].lower():
-        model = models.resnet18(pretrained=True)
+    if "vgg" in checkpoint['arch'].lower():
+        model = models.vgg16_bn(pretrained=True)
     else:
-        #unsupported model, this error should have been caught earlier
-        #if for some reason it was not, just going to set to vgg16_bn
+        #either densenet or an unsupported model was specified
         #in real life, I would make this a stronger error check, but I 
         #have spent too much time on this already
-        model = models.vgg16_bn(pretrained=True)
+        model = models.densenet121(pretrained=True)
         
     #update the model classifier, load weights and class_toidx
     model.classifier = checkpoint['classifier']
@@ -195,11 +196,11 @@ def predict(model, img_tensor, cmd_input):
     model.eval()
     
     with torch.no_grad():
-        logps = model.forward(img_tensor)
+        logps = model.forward(img_tensor.view([1, 3, 224, 224]).float().to(device))
         
     ps = torch.exp(logps)
     
-    top_p, top_class = ps.topk(cmd_input.k_most_likely, dim=1)
+    top_p, top_class = ps.topk(int(cmd_input.k_most_likely), dim=1)
     
     #adjust for 0 base vs 1 base counting
     top_class = top_class + 1
@@ -208,7 +209,6 @@ def predict(model, img_tensor, cmd_input):
     top_p_np = np.array(top_p)[0]
     top_class_np = np.array(top_class)[0].astype('str')
     
-    #if category mapping has been provided, map numbers to name
     
     #if a mapping for category names was provided
     if cmd_input.cat_names is not None:
@@ -217,7 +217,7 @@ def predict(model, img_tensor, cmd_input):
             cat_to_name = json.load(f)
 
         #convert class names
-        top_class_names = [cat_to_name[number] for number in top_class_np]
+        top_class_np = [cat_to_name[number] for number in top_class_np]
     
-    return pd.Series(top_p_np, top_class_names)
+    return pd.Series(top_p_np, top_class_np)
     

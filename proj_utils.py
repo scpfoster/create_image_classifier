@@ -11,14 +11,14 @@ def train_cmd_line_def():
     ## required argument of the data directory
     parser.add_argument('data_directory')
     ## optional parameters for the commandline
-    parser.add_argument('--arch', action='store', dest='arch', default='vgg')
+    parser.add_argument('--arch', action='store', dest='arch', default='densenet')
     parser.add_argument('--save_dir', action='store',
                         dest='save_dir', default='')
     parser.add_argument('--learning_rate', action='store',
-                        dest='learn_rate', default=0.03)
+                        dest='learn_rate', default=0.003)
     parser.add_argument('--hidden_units', nargs='*', action='store',
-                        dest='hidden_units', type=int, default=[4096, 1024])
-    parser.add_argument('--epochs', action='store', dest='epochs', default=6)
+                        dest='hidden_units', type=int, default=[512, 256])
+    parser.add_argument('--epochs', action='store', dest='epochs', default=8)
     parser.add_argument('--gpu', action='store_true',
                         dest='use_gpu', default=False)
 
@@ -97,7 +97,7 @@ def create_data_loader(file_dir, transforms, setShuffle=False, batch=64 ):
 ## returns a tensor representing a 224 x 224 image
 def process_image(cmd_inputs):
     
-    image = Image.open(cmd_input.image_path)
+    image = Image.open(cmd_inputs.image_path)
     # resize the image so the shortest side is 256 pixels while maintaining aspect ratio
     if image.width < image.height:
         scaleFactor = image.width / 256
