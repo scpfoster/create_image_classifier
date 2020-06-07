@@ -37,5 +37,5 @@ The file train.py is called with the top level data directory path and a number 
 
 #### Predict a flower type
 The file predict.py is called with the path to an image, the saved checkpoint file and a number of optional inputs.  The optional inputs are described in the proj_utils.py file.  The testing was completed with the following command line.
-`python predict.py `
+`python predict.py flowers/valid/1/image_06739.jpg checkpoint2020_06_07_18_44.pth --gpu --category_names=cat_to_name.json`
 
