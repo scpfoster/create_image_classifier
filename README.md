@@ -17,6 +17,7 @@ Code in the notebook works in the Udacity workspace.  An HTML output of the last
 ## Part 2 Command Line
 Running the command line to train the model:
 * python train.py flowers --gpu
+
 should result in similar results to the Jupyter notebook since the default's for all commandline options result in the same model and data being used to train the notebook. 
 
 Currently, this is not working as expected and is being debugged.
