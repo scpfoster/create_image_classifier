@@ -15,21 +15,22 @@
 ##  path to the data - as a string, eg: 'flowers'
 ## Optional Command Line Arguments:
 ##  --arch - the base model to be used, must be a torchvision supported model, 
-##        default vgg
+##        default vgg, saved as arch
 ##  --save_dir - string - directory to save the file checkpoint.pth
-##        default is current directory
+##        default is current directory, saved as save_dir
 ##  --learning_rate - float - learning rate to be used during training
-##        default is 0.03
+##        default is 0.03, saved as learn_rate
 ##  --hidden_units - int - number of hidden units to use in the classifier
-##        default is 512
-##  --epochs - int - number of training epocs, default is 10
-##  --gpu - use a GPU when available
+##        default is [4096, 1024], saved as hidden_units
+##  --epochs - int - number of training epocs, default is 6, saved as epochs
+##  --gpu - use a GPU when available, default false, saved as use_gpu
 
 import argparse
 import proj_utils
 import proj_model
 from torchvision import datasets, transforms, models
 from torch import optim
+
 
 #import torch
 #from torch import nn
@@ -41,7 +42,7 @@ from torch import optim
 ############
 ## set up commandline argument parsing
 ##########
-cmd_input = proj_utils.cmd_line_def()
+cmd_input = proj_utils.train_cmd_line_def()
 
 #########
 ## data paths
@@ -59,16 +60,14 @@ test_valid_transforms = proj_utils.create_data_transforms('test_valid')
 
 image_datasets = {}
 dataloaders = {}
-image_datasets['train'], dataloaders['train'] = proj_utils.create_data_loader(
-    train_dir, train_tranforms, True)
-image_datasets['test'], dataloaders['test'] = proj_utils.create_data_loader(
-    test_dir, test_valid_transforms)
-image_datasets['valid'], dataloaders['valid'] = proj_utils.create_data_loader(
-    valid_dir, test_valid_transforms)
+image_datasets['train'], dataloaders['train'] = proj_utils.create_data_loader(train_dir, train_tranforms, True)
+image_datasets['test'], dataloaders['test'] = proj_utils.create_data_loader(test_dir, test_valid_transforms)
+image_datasets['valid'], dataloaders['valid'] = proj_utils.create_data_loader(valid_dir, test_valid_transforms)
 
 #####
 ## load the specified model and update the classifer passed on the hidden_units 
 ####
+print("Loading model based on arch input ", cmd_input.arch)
 model = proj_model.load_model_mod_classifier(cmd_input)
 #print(model)
 
@@ -76,5 +75,14 @@ model = proj_model.load_model_mod_classifier(cmd_input)
 ## train the model on the specified location with the specified hyper parameters
 ## note this has only ever been tested on the Udacity GPU
 #######
-trained_model = proj_model.train_model(model, cmd_input, dataloaders)
+print("starting to train model")
+trained_model, optimizer = proj_model.train_model(model, cmd_input, dataloaders)
+
+######
+##   save the model in the specified directory
+##   model will be saved in file called checkpoint_<dateTime>.pth
+######
+print("saving model to checkpoint")
+save_checkpoint(trained_model, cmd_input, dataset, optimizer)
+
 
